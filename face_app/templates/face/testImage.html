@@ -1,0 +1,39 @@
+{% extends 'face/base.html' %}
+{% load crispy_forms_tags %}
+{% block title %} Test Image{% endblock %}
+{% block content%}
+<div class="outer-container">
+  <div class="container">
+    <div class="row">
+      <div class="contents">
+        <div class="col-md-12">
+          <div class="heading bg-info">
+            <h3>TEST IMAGE</h3>
+          </div>
+          <div class="w3-card f-card mt-5">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert message alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                          <span aria-hidden="">&times;</span>
+                        </button>
+                        </div>
+                {% endfor %}
+            {%  endif %}
+
+            <form method="post" enctype="multipart/form-data">
+              {% csrf_token %}
+              <section>
+                <label for="image">Image</label>
+                <input type="file" name="image" accept="image/*" required>
+              </section>
+              <button class="btn btn-outline-info mt-5 btn-block" type="submit" name="button">  Test</button>
+            </form>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock%}

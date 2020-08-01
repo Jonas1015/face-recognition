@@ -1,0 +1,31 @@
+{% extends 'face/base.html' %}
+{% block title %} Results {% endblock %}
+{% block content %}
+<div class="outer-container">
+  <div class="container">
+    <div class="row">
+      <div class="contents">
+        <div class="col-md-12">
+          <div class="heading bg-info">
+            <h3>RESULTS</h3>
+          </div>
+          <div class="cards d-flex mt-5">
+            {% if students %}
+              {% for student in students %}
+                <a href="{% url 'view-result' student.id %}" class="col-6 w3-card c-card pt-3 pb-3 pl-3 pl-3 pr-3">
+                  {{ student.fname }} {{ student.sname }} {{ student.lname }} from {{ student.course.name}} ({{ student.course.code}}), year: {{ student.year }}
+                </a>
+              {% endfor %}
+            {% elif student %}
+              <a href="{% url 'view-result' student.id %}" class="col-md-12 w3-card c-card pt-3 pb-3 pl-3 pl-3 pr-3">
+                  {{ student.fname }} {{ student.sname }} {{ student.lname }} from {{ student.course.name}} ({{ student.course.code}}), year: {{ student.year }}
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

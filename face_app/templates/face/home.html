@@ -1,0 +1,43 @@
+  {% extends 'face/base.html' %}
+  {% block title %} Dashboard {% endblock %}
+  {% block content%}
+    <div class="outer-container">
+      <div class="container">
+        <div class="row">
+          <div class="col-12 ">
+          <div class="contents">
+              <div class="heading mb-4 bg-info">
+                <h3>DASHBOARD</h3>
+              </div>
+              <div class="w3-card d-flex">
+                <a class="col-3 summary" href="{% url 'all-students' %}">
+                  <span><h3>STUDENTS</h3></span>
+                  <h2>
+                    {{  students_number }}
+                  </h2>
+                </a>
+                <a class="col-3 summary" href="{% url 'all-courses' %}">
+                  <span><h3>COURSES</h3></span>
+                  <h2>
+                    {{ courses_number }}
+                  </h2>
+                </a>
+                <a class="col-3 summary" href="#">
+                  <span><h3>TESTS COMPLETED</h3></span>
+                  <h2>
+
+                  </h2>
+                </a>
+                <a class="col-3 summary" href="#">
+                  <span><h3>SUCCESSFUL TESTS</h3></span>
+                  <h2>
+
+                  </h2>
+                </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endblock%}
