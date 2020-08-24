@@ -3,9 +3,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db.models import F, Q
 from .forms import *
+from.models import *
 import face_recognition
 from PIL import Image, ImageDraw
 import numpy as np
+import cv2
 
 # Create your views here.
 def home(request):
@@ -51,7 +53,7 @@ def byCourses(request, id):
     return render(request, myTemplate, context)
 
 def addStudent(request):
-    form = addStudentForm()
+    form = addStudentForm(request.POST or None)
     if request.method == 'POST':
         form = addStudentForm(request.POST, request.FILES)
         if form.is_valid():
@@ -74,13 +76,12 @@ def addStudent(request):
                 form.save()
                 messages.success(request, f'Student added successfully!')
                 return redirect('add-student')
-    else:
-        form = addStudentForm()
-        context = {
-            'form': form,
-        }
-        myTemplate = 'face/addStudent.html'
-        return render(request, myTemplate, context)
+    form = addStudentForm(request.POST or None)
+    context = {
+        'form': form,
+    }
+    myTemplate = 'face/addStudent.html'
+    return render(request, myTemplate, context)
 
 def updateStudent(request, id):
     instance = get_object_or_404(Student, pk = id)
@@ -234,6 +235,7 @@ def detectImage(request):
             for student in students:
                 # loading image from the dataset to face_recognition  library
                 known_image = face_recognition.load_image_file(student.image)
+
                 # Encoding image
                 student_encoding = face_recognition.face_encodings(known_image)[0]
 
@@ -312,4 +314,108 @@ def detectImage(request):
 
     myTemplate = 'face/testImage.html'
     context = {}
+    return render(request, myTemplate, context)
+
+
+
+    # Video
+def video(request):
+
+    if request.method == 'POST':
+
+        # Capture video from HTML page
+        video = request.FILES['video']
+        # Create in instance so as to save
+        form = TestVideo (
+            video = video
+        )
+        # save the video first
+        form.save()
+
+        # extract the latest saved video from database
+        video = TestVideo.objects.all().order_by('-id')[0]
+
+
+        # load it in the open cv
+        input_video = cv2.VideoCapture(video.video.path)
+
+
+        length = int(input_video.get(cv2.CAP_PROP_FRAME_COUNT))
+
+
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        # output_video = cv2.VideoWriter('output.mp4', fourcc, 29.97, (640, 360))
+        video.delete()
+
+        print('Video Path: ', video.video.path)
+        print('Length: ', length)
+        print('Fourcc: ', fourcc)
+
+        known_faces = []
+        face_locations = []
+        face_encodings = []
+        face_names = []
+        frame_number = 0
+        # process_this_frame = True
+
+        students = Student.objects.all()
+        while True:
+            ret, frame = input_video.read()
+            frame_number += 1
+
+            if not ret:
+                break
+            # small_frame = cv2.resize(frame, (0, 0), fx = 0.25, fy = 0.25)
+            # print(frame_number)
+
+            rgb_frame = frame[:, :, ::-1]
+
+            face_locations = face_recognition.face_locations(rgb_frame)
+
+            if face_locations:
+                face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
+            else:
+                print(f'Frame number {frame_number} has no face!!')
+                continue
+
+            face_names = []
+
+            for face_encoding in face_encodings:
+
+                for student in students:
+                    image = face_recognition.load_image_file(student.image)
+                    encoded_image = face_recognition.face_encodings(image)[0]
+
+                    match = face_recognition.compare_faces([encoded_image], face_encoding, tolerance = 0.40)
+                    if match[0]:
+                        if student not in known_faces:
+                            known_faces.append(student)
+                            print(f'{student.fname} {student.sname}.{student.lname}')
+                    elif not match[0]:
+                        print(f'Got none here in frame number: {frame_number}/{length}')
+                        continue
+
+        input_video.release()
+        cv2.destroyAllWindows()
+        if len(known_faces) == 1:
+            myTemplate = 'face/results.html'
+            context = {
+                'student': known_faces[0],
+            }
+
+            return render(request, myTemplate, context)
+        elif len(known_faces) > 1:
+            myTemplate = 'face/results.html'
+            context = {
+                'students': known_faces,
+            }
+
+            return render(request, myTemplate, context)
+        else:
+            messages.warning(request, f'Unknown faces in the video')
+            return redirect('video')
+    myTemplate = 'face/testVideo.html'
+    context = {
+        # 'form': form,
+    }
     return render(request, myTemplate, context)

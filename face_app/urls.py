@@ -21,7 +21,8 @@ urlpatterns = [
     path('delete-course/<int:id>/', deleteCourse, name  ='delete-course'),
 
     #===================== RECOGNITION ITSELF ==================================
-    path('test-student/', detectImage, name  ='test-image'),
+    path('test-student-image/', detectImage, name  ='test-image'),
+    path('test-video/', video, name  = 'video'),
     path('view-result/<int:id>/', viewResult, name  ='view-result'),
 
 ]
