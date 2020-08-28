@@ -5,7 +5,7 @@
 # 64-bit based python setup
 # Create virtual environment for the project
 # After activating it, go to the folder where you want to install your project
-# Navigate in command up inside the project folder
-# Run pip install -r requirements.txt
+# Navigate in command up to inside the project folder
+# Run pip install -r packages.txt
 # Install all the dependencies and you are good to go.
 # For further reference how to install some modules go to https://www.youtube.com/watch?v=xaDJ5xnc8dc
