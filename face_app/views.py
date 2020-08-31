@@ -213,74 +213,60 @@ def deleteCourse(request, id):
 
 # ====================== FACE RECOGNITION LOGICS ======================================
 def detectImage(request):
+    def face_locations(image):
+        fimage = face_recognition.load_image_file(image)
+        face_locations = face_recognition.face_locations(fimage)
+        return face_locations
+    
+    def encodeimages(image):
+        flocations = face_locations(image)
+        image_loaded = face_recognition.load_image_file(image)
+        encodings = face_recognition.face_encodings(image_loaded, flocations)
+        return encodings
+
+    
+    def compare(known_image_encodings, unknown_image_encodings):
+        results = face_recognition.compare_faces([known_image_encodings], unknown_image_encodings, tolerance = 0.40)
+        return results
+    
     if request.method == 'POST':
+        found = None
         # Get a file from the template/form
         myfile = request.FILES['image']
+        unknown_image = myfile
 
-        # Loading image of the unknown in face_recognition library
-        unknown_image = face_recognition.load_image_file(myfile)
+        # # Loading image of the unknown in face_recognition library
+        # unknown_image = face_recognition.load_image_file(myfile)
         # Check if faces are available in the picture
-        unknown_face_locations = face_recognition.face_locations(unknown_image)
+        unknown_face_locations = face_locations(myfile)
 
-        # Put a condition to execute some code due to number of faces
-        if len(unknown_face_locations) == 1:
-            # We emcode the unknown face after detecting it
-            unknown_encoding = face_recognition.face_encodings(unknown_image)[0]
-
-            # We first load all data from the table
-            students = Student.objects.all()
-
-
-            # Now working with each dataset from the queryset
-            for student in students:
-                # loading image from the dataset to face_recognition  library
-                known_image = face_recognition.load_image_file(student.image)
-
-                # Encoding image
-                student_encoding = face_recognition.face_encodings(known_image)[0]
-
-                # Lets compare the faces one after another since we are in the loop
-                results = face_recognition.compare_faces([student_encoding], unknown_encoding, 0.5)
-
-                # Check if any result was found
-                if results[0]:
-                    myTemplate = 'face/results.html'
-                    context = {
-                        'student': student,
-                        'file': myfile,
-                    }
-                    return render(request, myTemplate, context )
-            # If no image was matched return the message
-            # messages.warning(request, f'None of the image matched your picture!')
-            # return redirect('test-image')
-        elif len(unknown_face_locations) > 1:
+        flocations = face_locations(myfile)
+        if len(flocations) > 0:
             # Holding students variable
             students = []
             all_students = Student.objects.all()
             # Since we loaded and took locations already, now encode the test image
-            unknown_group_encodings = face_recognition.face_encodings(unknown_image, unknown_face_locations)
+            unknown_group_encodings = encodeimages(unknown_image)
 
-            for (top, right, bottom, left), unknown_face_encoding in zip(unknown_face_locations, unknown_group_encodings):
+            for (top, right, bottom, left), unknown_group_encoding in zip(face_locations(unknown_image), unknown_group_encodings):
                 # Loop through students first
                 for student in all_students:
                     # loading image from the dataset to face_recognition  library
-                    known_image = face_recognition.load_image_file(student.image)
+                    # known_image = face_recognition.load_image_file(student.image)
                     # Encoding student image
-                    student_encoding = face_recognition.face_encodings(known_image)[0]
+                    student_encoding = encodeimages(student.image)
 
                     # Lets compare the faces one after another since we are in the loop
-                    results = face_recognition.compare_faces([student_encoding], unknown_face_encoding, tolerance = 0.40)
-
+                    # results = face_recognition.compare_faces([student_encoding], unknown_face_encoding, tolerance = 0.40)
+                    results = compare(student_encoding, unknown_group_encoding)
                     # Check if any result was found
-                    if results[0]:
+                    if len(results) > 0:
                         students.append(student)
-                        # for face_location in unknown_face_locations:
-                        #     top, right, bottom, left = face_location
-                        #     face_image = unknown_image[top:bottom, left:right]
-                        #     image = Image.fromarray(face_image)
-                        #     image.show()
                         print(student.fname)
                         break
+                if len(students) >= len(flocations):
+                    break
+            
             print(students)
             # check if students list is populated, if not return a message
             if len(students) == 1:
